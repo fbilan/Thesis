@@ -1,9 +1,8 @@
 from matplotlib.patches import Polygon
-import A5_Text_Handling
-from A2_Visualisation import *
-from A4_Picture_Handling import *
-from A5_Text_Handling import *
+#from A5_Text_Handling import *
 import math
+import libpysal as ps
+import esda
 
 # This function extracts bounding box coordinates and returns a string which can be used with Flickr API
 def bbox_coords(wgs_polygon):
@@ -56,6 +55,7 @@ def convert_raster_to_polygon(x_mesh, y_mesh, count_array, grid_size):
                 polygons = polygons.append(polygon)
     return(polygons)
 
+# This function distributes weights and calculates the moran's I for the input and returns a shapefile of the hotspot clusters
 def moran_local_hh(shapefile):
     # Create Shapefile of meshgrids (multipolygon)
     weights = ps.weights.Queen.from_dataframe(shapefile)  # generate spatial weights (Queen in this case)
@@ -68,19 +68,6 @@ def moran_local_hh(shapefile):
     shapefile['quadrant'] = moran_loc.q # Store the quadrant they belong to
     hh = shapefile.loc[(shapefile['quadrant'] == 1) & (shapefile['significant'] == True), 'geometry'] # extract HH
     return(hh)
-
-
-    # ax = municipalities_lv.plot(facecolor='none', edgecolor='grey', figsize=(9, 9))
-    # lisa_cluster(moran_loc, shapefile, p=0.05, legend = True, alpha = 0.5, ax = ax)
-    # base_plot(ax = ax, output_name='test_lisa')
-    # plt.show()
-
-    # input_img = input_grid
-    # w = ps.weights.lat2W(len(input_img), len(input_img[0]), rook=False, id_type="int")
-    # lm = Moran_Local(input_img, w)
-    # moran_significance = np.reshape(lm.p_sim, (len(input_img), len(input_img[0])))
-    # #print(input_grid)
-    # #print(moran_significance)
 
 def kde_quartic(d,h):
     dn=d/h
@@ -132,6 +119,7 @@ def kde(point_file_lv, boundary, grid_size, h):
     intensity = np.ma.masked_array(intensity, intensity < 1)
     return x_mesh, y_mesh, intensity
 
+# This function prints the results of the relation between LF and CES for the automatic method
 def extract_automatic_annotations(point_file_lv_picture, point_file_lv_text, hotspot_file, feature, picture_annotations ='Data/Annotations/picture_annotations_merged.csv'):
     if feature == 'Pictures':
         annotations = geopandas.clip(point_file_lv_picture, hotspot_file)
@@ -260,6 +248,7 @@ def extract_automatic_annotations(point_file_lv_picture, point_file_lv_text, hot
     else:
         print('Wrong Feature')
 
+# This function prints the results of the relation between LF and CES for the manual method
 def extract_manual_annotations(picture_annotations_lv, text_annotations_lv, feature, distance):
     lf_subtypes = ["Bedrock", "Flower / Funghi", "Forest", "Grass- and Moorland", "Lake", "Natural Landscape", "River / Creek", "Rock", "Shrub", "Snow / Ice", "Summit", "Tree", "Waterfall", "Wild Animal", "Agriculture", "Human influenced Landscape", "Infrastructure", "Livestock", "Path / Trail", "Urban"]
     ces_subtypes = ["Identity", "Information Board", "Information Office", "Local History", "Tradition",

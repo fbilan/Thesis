@@ -201,7 +201,6 @@ def add_coords_to_annotations():
     flickr_coords = pd.DataFrame(flickr_ann_wgs[['id', 'latitude', 'longitude']])
     flickr_coords = flickr_coords.rename(columns={"id": "PICTURE_ID"})
     flickr_coords['PICTURE_ID'] = flickr_coords['PICTURE_ID'].astype(str)
-    print(flickr_coords['PICTURE_ID'])
 
     annotation_folder = 'Data/Annotations/'
     annotation_file = annotation_folder + 'picture_annotations_merged.csv'
@@ -210,8 +209,7 @@ def add_coords_to_annotations():
     annotation_file['PICTURE_ID'] = annotation_file['PICTURE_ID'].astype(str)
     annotation_file = annotation_file.merge(flickr_coords, on='PICTURE_ID', how='left')
 
-    #annotation_file = pd.concat([annotation_file, flickr_coords], join='outer', axis=1, sort=False)
-    print(annotation_file)
+    annotation_file = pd.concat([annotation_file, flickr_coords], join='outer', axis=1, sort=False)
     save(annotation_file, 'Flickr_Annotations')
 
 def count_per_contributor(flickr_40_lv):
@@ -223,9 +221,9 @@ def count_per_contributor(flickr_40_lv):
     print(np.mean(count_list), np.std(count_list), np.median(count_list), max(count_list))
     plt.figure(figsize=(4,5))
     plt.boxplot(count_list, showfliers=False, )
-    #plt.xlabel('Flickr Contributors')
+    plt.xlabel('Flickr Contributors')
     plt.ylabel('Count')
-    #plt.title('Number of Pictures per Contributor')
+    plt.title('Number of Pictures per Contributor')
     plt.tight_layout()
     plt.tick_params(
         axis='x',  # changes apply to the x-axis

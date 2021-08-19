@@ -2,8 +2,6 @@ import geopandas
 import pandas as pd
 import datetime
 
-
-
 # This function converts a df to a gdf and vice-versa depending on argument
 def df_gdf_conversion(input, output):
     if output == 'gdf': # input is df -> output is gdf
@@ -31,8 +29,6 @@ def add_times(df):
     df['year'] = pd.DatetimeIndex(df['datetaken']).year.astype(int)
     df['datetaken'] = df['datetaken'].astype(str)
     return df
-
-
 
 # This function converts a month number (int or str) to the name of the month
 def month_to_string(month_number):
@@ -73,8 +69,6 @@ def pud_per_month(df):
         pud[key] = puds
     return pud
 
-
-
 # This function calculates the number of contributors and pictures for a given point file
 def get_contributors_dict(point_file):
     owners_dict = {}
@@ -90,3 +84,11 @@ def get_contributors_dict(point_file):
     print('Contributors: ', len(owners_dict), '\nPhotos: ', len(point_file),
           '\nAverage: ', round(len(point_file)/len(owners_dict), 2))
     return owners_dict
+
+def annotations_per_km(dict, file):
+    densities = []
+    for key in dict:
+        key_txt = key+'.txt'
+        density = len(file[file['FILE'] == key_txt])/dict[key]
+        densities.append(density)
+    return densities

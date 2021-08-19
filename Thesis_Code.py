@@ -1,33 +1,17 @@
-import flickrapi
-import geopandas
-import pandas as pd
-from os import path
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
-import datetime
-import urllib
-import contextily as ctx
-import libpysal as ps
-import esda
 import matplotlib.patheffects as pe
-from shapely.geometry import Polygon
-from shapely.ops import unary_union
-#from splot.esda import moran_scatterplot
-#from splot.esda import lisa_cluster
-import matplotlib.patches as mpatches
 from os import listdir
+from os import path
 from os.path import isfile, join
 import gpxpy
 import gpxpy.gpx
+import contextily as ctx
 import matplotlib.ticker as ticker
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-#from mpl_toolkits.basemap import Basemap
 from A1_Data_Extraction import *
-from A2_Visualisation import *
+from A2_Visualisation import base_plot
+from A2_Visualisation import min_distance_plot
 from A3_Data_Handling import *
 from A4_Picture_Handling import *
-from A5_Text_Handling import *
 from A6_Geometric_Functions import *
 from A7_Jaccard_Index import *
 
@@ -150,37 +134,37 @@ photos = photo_list['photos']
 
 def create_flickr_data():
     df = create_photos_df(api_key, secret_api_key, photos, bbox)
-    # if path.exists(csv_file):
-    #     df2 = pd.read_csv(csv_file, delimiter=',')
-    #     #df = df.append(df2, ignore_index=True)
-    #     df = df.astype('str') # https://stackoverflow.com/questions/46489695/drop-duplicates-not-working-in-pandas Wizhi -> remove of duplicates works
-    #     df.drop_duplicates(subset = 'id', inplace=True)
-    #     gdf = df_gdf_conversion(df, 'gdf')
-    #     gdf = clipping(gdf, entlebuch_lv)
-    #     df = df_gdf_conversion(gdf, 'df')
-    #     if df.shape[0] > df2.shape[0]: # if old file + new file is larger than the old file store the old + new file
-    #         print(df.shape, ' is the new File and overwrote the old file, ', df2.shape)
-    #         save(df, 'flickr_points')
-    #     else:
-    #         print('Old File is larger', df2.shape)
-    # else:
-    #     df.drop_duplicates(inplace=True)
-    #     gdf = df_gdf_conversion(df, 'gdf')
-    #     gdf = clipping(gdf, entlebuch_lv)
-    #     df = df_gdf_conversion(gdf, 'df')
-    #     save(df, 'flickr_points')
-    #     print("New file has been created with the first retrieval")
+    if path.exists(csv_file):
+        df2 = pd.read_csv(csv_file, delimiter=',')
+        df = df.append(df2, ignore_index=True)
+        df = df.astype('str') # https://stackoverflow.com/questions/46489695/drop-duplicates-not-working-in-pandas Wizhi -> remove of duplicates works
+        df.drop_duplicates(subset = 'id', inplace=True)
+        gdf = df_gdf_conversion(df, 'gdf')
+        gdf = clipping(gdf, entlebuch_lv)
+        df = df_gdf_conversion(gdf, 'df')
+        if df.shape[0] > df2.shape[0]: # if old file + new file is larger than the old file store the old + new file
+            print(df.shape, ' is the new File and overwrote the old file, ', df2.shape)
+            save(df, 'flickr_points')
+        else:
+            print('Old File is larger', df2.shape)
+    else:
+        df.drop_duplicates(inplace=True)
+        gdf = df_gdf_conversion(df, 'gdf')
+        gdf = clipping(gdf, entlebuch_lv)
+        df = df_gdf_conversion(gdf, 'df')
+        save(df, 'flickr_points')
+        print("New file has been created with the first retrieval")
 
     flickr_lv2 = add_times(flickr_lv)
     flickr_lv2 = min_distance(flickr_lv2, trails_lv)
-    min_distance_plot(flickr_lv2, 'Flickr_Distance', mode = 'normal')
+    min_distance_plot(flickr_lv2, 'Flickr_Distance', mode = 'cummulative')
 
-    # Filter for May - October and within 40m to hiking trail
-    # flickr_lv_summer = flickr_lv2[(flickr_lv2['month'] >= 5) & (flickr_lv2['month'] < 11) & (flickr_lv2['year'] >= 1999) & (flickr_lv2['distance_to_line'] < 40)]
-    #
-    # save(flickr_lv_summer, 'flickr_40_summer')
-    #
-    # download_pictures(flickr_40_lv)
+    #Filter for May - October and within 40m to hiking trail
+    flickr_lv_summer = flickr_lv2[(flickr_lv2['month'] >= 5) & (flickr_lv2['month'] < 11) & (flickr_lv2['year'] >= 1999) & (flickr_lv2['distance_to_line'] < 40)]
+
+    save(flickr_lv_summer, 'flickr_40_summer')
+
+    download_pictures(flickr_40_lv)
 
 def flickr_data_analysis():
     # Overview Plot with Municipalities
@@ -281,13 +265,13 @@ def flickr_data_analysis():
         if key > 1999:
             years[key] = pic_year[key]
 
-    # plots
-    plt.xticks(range(2000, 2021))
-    plot_dict(years, 'Number of Pictures per Year from 2000 (May - Oct)', 'Pictures_per_Year_40_summer')
-    #plt.ylim((0, 1500))
-    plot_dict(months_name, 'Absolute Number of Pictures per Month within 40m', 'Pictures_per_Month_40_summer')
-    #plt.ylim((0, 50))
-    plot_dict(pud, 'Number of Photo-User-Days (PUD) per Month within 40m', 'PUD_40_summer')
+    # # plots
+    # plt.xticks(range(2000, 2021))
+    # plot_dict(years, 'Number of Pictures per Year from 2000 (May - Oct)', 'Pictures_per_Year_40_summer')
+    # #plt.ylim((0, 1500))
+    # plot_dict(months_name, 'Absolute Number of Pictures per Month within 40m', 'Pictures_per_Month_40_summer')
+    # #plt.ylim((0, 50))
+    # plot_dict(pud, 'Number of Photo-User-Days (PUD) per Month within 40m', 'PUD_40_summer')
 
     get_contributors_dict(flickr_40_lv)
 
@@ -332,124 +316,124 @@ def create_hotspots(point_file_lv, boundary, grid_size, count, data):
             pass
         else:
             count_list[y_row][x_row][1].append(contributor[i])
-    #
-    # # HEATMAP OUTPUT DEPENDING ON INPUT
-    # output_list = []
-    # if count == 'Contributors':
-    #     for j in range(len(y_grid)):
-    #         count_row = [[0] for a in range(len(x_grid))]
-    #         output_list.append(count_row)
-    #         for i in range(len(x_grid)):
-    #             output_list[j][i] = len(count_list[j][i][1])
-    # elif count == 'Pictures':
-    #     for j in range(len(y_grid)):
-    #         count_row = [[0] for a in range(len(x_grid))]
-    #         output_list.append(count_row)
-    #         for i in range(len(x_grid)):
-    #             output_list[j][i] = len(count_list[j][i][0])
-    #
-    # count_array = np.array(output_list)
-    # count_array_plot = np.ma.masked_array(count_array, count_array < 1)
-    #
-    #
-    # raster_polygon_plot = convert_raster_to_polygon(x_mesh, y_mesh, count_array_plot, grid_size)
-    #
-    # raster_polygon = convert_raster_to_polygon(x_mesh, y_mesh, count_array, grid_size)
-    # hh_gdf = moran_local_hh(raster_polygon) # extract hotspot
-    #
-    # # Convert geoseries to gdf
-    # hh_gdf = geopandas.GeoDataFrame(geometry=geopandas.GeoSeries(hh_gdf))
+
+    # HEATMAP OUTPUT DEPENDING ON INPUT
+    output_list = []
+    if count == 'Contributors':
+        for j in range(len(y_grid)):
+            count_row = [[0] for a in range(len(x_grid))]
+            output_list.append(count_row)
+            for i in range(len(x_grid)):
+                output_list[j][i] = len(count_list[j][i][1])
+    elif count == 'Pictures':
+        for j in range(len(y_grid)):
+            count_row = [[0] for a in range(len(x_grid))]
+            output_list.append(count_row)
+            for i in range(len(x_grid)):
+                output_list[j][i] = len(count_list[j][i][0])
+
+    count_array = np.array(output_list)
+    count_array_plot = np.ma.masked_array(count_array, count_array < 1)
+
+
+    raster_polygon_plot = convert_raster_to_polygon(x_mesh, y_mesh, count_array_plot, grid_size)
+
+    raster_polygon = convert_raster_to_polygon(x_mesh, y_mesh, count_array, grid_size)
+    hh_gdf = moran_local_hh(raster_polygon) # extract hotspot
+
+    # Convert geoseries to gdf
+    hh_gdf = geopandas.GeoDataFrame(geometry=geopandas.GeoSeries(hh_gdf))
     test = 0
-    # if count == 'Contributors':
-    #     if data == 'Flickr Pictures':
-    #         # Assign cluster number based on cell position
-    #         cluster = [1,1,1,1,1,1,1,1,2,1,1,1,1,1,2,2,2,1,1,1,1,2,2,1,1,3,2,3,4,5,5,5,5,5,6,6,6,6,7,8]
-    #         try:
-    #             hh_gdf['CLUSTER'] = cluster
-    #             hh_gdf = hh_gdf.dissolve(by='CLUSTER')
-    #             hh_gdf['ID'] = range(1, 9)
-    #             hh_gdf.to_file('Data/{0}_{1}.shp'.format('hotspots_dissolved',data))
-    #             test = 1
-    #         except:
-    #             pass
-    #     elif data == 'Text Data':
-    #         # Assign cluster number based on cell position
-    #         cluster = [1,2,1,1,1,3,3,1,3,3,3,3,3,3,3,4,4,6,6,5,6,7,8,7,8,8]
-    #         try:
-    #             hh_gdf['CLUSTER'] = cluster
-    #             hh_gdf = hh_gdf.dissolve(by='CLUSTER')
-    #             hh_gdf['ID'] = range(1, 9)
-    #             hh_gdf.to_file('Data/{0}_{1}.shp'.format('hotspots_dissolved',data))
-    #             test = 1
-    #         except:
-    #             pass
-    #     elif data == 'Combined':
-    #         # Assign cluster number based on cell position
-    #         cluster = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3,
-    #                    3, 4, 5, 5, 6, 7, 7, 7, 7]
-    #
-    #         try:
-    #             hh_gdf['CLUSTER'] = cluster
-    #             hh_gdf = hh_gdf.dissolve(by='CLUSTER')
-    #             hh_gdf['ID'] = range(1, 8)
-    #             hh_gdf.to_file('Data/{0}_{1}.shp'.format('hotspots_dissolved',data))
-    #             test = 1
-    #         except:
-    #             try:
-    #                 cluster = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2,
-    #                            3, 3, 4, 5, 6, 6, 7, 7, 8, 8, 8, 8]
-    #                 hh_gdf['CLUSTER'] = cluster
-    #                 hh_gdf = hh_gdf.dissolve(by='CLUSTER')
-    #                 hh_gdf['ID'] = range(1, 9)
-    #                 hh_gdf.to_file('Data/{0}_{1}.shp'.format('hotspots_dissolved', data))
-    #                 test = 1
-    #             except:
-    #                 try:
-    #                     cluster = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 2, 2,
-    #                                2, 2, 2, 3, 3, 4, 5, 6, 6, 7, 8, 8, 8]
-    #                     hh_gdf['CLUSTER'] = cluster
-    #                     hh_gdf = hh_gdf.dissolve(by='CLUSTER')
-    #                     hh_gdf['ID'] = range(1, 9)
-    #                     hh_gdf.to_file('Data/{0}_{1}.shp'.format('hotspots_dissolved', data))
-    #                     test = 1
-    #                 except:
-    #                     try:
-    #                         cluster = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 2,
-    #                                    2, 2, 2, 2, 3, 3, 4, 5, 6, 6, 7, 7, 8, 8, 8, 8]
-    #                         hh_gdf['CLUSTER'] = cluster
-    #                         hh_gdf = hh_gdf.dissolve(by='CLUSTER')
-    #                         hh_gdf['ID'] = range(1, 9)
-    #                         hh_gdf.to_file('Data/{0}_{1}.shp'.format('hotspots_dissolved', data))
-    #                         test = 1
-    #                     except:
-    #                         pass
-    #
-    #     else:
-    #         print('Wrong data')
-    #
-    # # Plot count per cell
-    # ax = municipalities_lv.plot(facecolor='none', edgecolor='grey', figsize=(9, 9))
-    # entlebuch_lv.plot(facecolor='none', edgecolor='black', ax = ax)
-    # municipalities_lv.apply(lambda x: ax.annotate(text=x.NAME, xy=x.geometry.centroid.coords[0], ha='center', fontsize = 8, color = 'black', path_effects=[pe.withStroke(linewidth=1.2, foreground="white")]), axis=1)
-    # raster_polygon_plot.plot(ax = ax, column='value', cmap = 'hot_r', edgecolor = 'black', legend = True, alpha = 0.6)
-    # #base_plot(ax = ax, output_name=data + '_total_number_' + str(grid_size) + '_' + count)
-    # #plt.show()
-    #
-    # # Plot HH clusters
-    # ax = municipalities_lv.plot(facecolor='none', edgecolor='grey', figsize=(9, 9))
-    # entlebuch_lv.plot(facecolor='none', edgecolor='black', ax = ax)
-    # municipalities_lv.apply(lambda x: ax.annotate(text=x.NAME, xy=x.geometry.centroid.coords[0], ha='center', fontsize = 8, color = 'black', path_effects=[pe.withStroke(linewidth=1.2, foreground="white")]), axis=1)
-    # hh_gdf.plot(ax=ax, facecolor='red', edgecolor='black', alpha = 0.5)
-    # hotspot = ['Hotspot']
-    # custom_legend = [mpatches.Patch(facecolor='red', edgecolor='black', alpha = 0.5, linewidth=1, linestyle='-')]
-    # ax.legend(custom_legend, hotspot, loc='lower right', facecolor = 'white', fontsize=12)
-    # if count == 'Contributors':
-    #     try:
-    #         hh_gdf.apply(lambda x: ax.annotate(text=x.ID, xy=x.geometry.centroid.coords[0], ha='center', fontsize = 15, color = 'black', path_effects=[pe.withStroke(linewidth=1.2, foreground="white")]), axis=1)
-    #     except:
-    #         pass
-    # #base_plot(ax=ax, output_name=data + '_extracted_hotspots_queen_' + str(grid_size) + '_' + count)
-    # #plt.show()
+    if count == 'Contributors':
+        if data == 'Flickr Pictures':
+            # Assign cluster number based on cell position
+            cluster = [1,1,1,1,1,1,1,1,2,1,1,1,1,1,2,2,2,1,1,1,1,2,2,1,1,3,2,3,4,5,5,5,5,5,6,6,6,6,7,8]
+            try:
+                hh_gdf['CLUSTER'] = cluster
+                hh_gdf = hh_gdf.dissolve(by='CLUSTER')
+                hh_gdf['ID'] = range(1, 9)
+                hh_gdf.to_file('Data/{0}_{1}.shp'.format('hotspots_dissolved',data))
+                test = 1
+            except:
+                pass
+        elif data == 'Text Data':
+            # Assign cluster number based on cell position
+            cluster = [1,2,1,1,1,3,3,1,3,3,3,3,3,3,3,4,4,6,6,5,6,7,8,7,8,8]
+            try:
+                hh_gdf['CLUSTER'] = cluster
+                hh_gdf = hh_gdf.dissolve(by='CLUSTER')
+                hh_gdf['ID'] = range(1, 9)
+                hh_gdf.to_file('Data/{0}_{1}.shp'.format('hotspots_dissolved',data))
+                test = 1
+            except:
+                pass
+        elif data == 'Combined':
+            # Assign cluster number based on cell position
+            cluster = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3,
+                       3, 4, 5, 5, 6, 7, 7, 7, 7]
+
+            try:
+                hh_gdf['CLUSTER'] = cluster
+                hh_gdf = hh_gdf.dissolve(by='CLUSTER')
+                hh_gdf['ID'] = range(1, 8)
+                hh_gdf.to_file('Data/{0}_{1}.shp'.format('hotspots_dissolved',data))
+                test = 1
+            except:
+                try:
+                    cluster = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2,
+                               3, 3, 4, 5, 6, 6, 7, 7, 8, 8, 8, 8]
+                    hh_gdf['CLUSTER'] = cluster
+                    hh_gdf = hh_gdf.dissolve(by='CLUSTER')
+                    hh_gdf['ID'] = range(1, 9)
+                    hh_gdf.to_file('Data/{0}_{1}.shp'.format('hotspots_dissolved', data))
+                    test = 1
+                except:
+                    try:
+                        cluster = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 2, 2,
+                                   2, 2, 2, 3, 3, 4, 5, 6, 6, 7, 8, 8, 8]
+                        hh_gdf['CLUSTER'] = cluster
+                        hh_gdf = hh_gdf.dissolve(by='CLUSTER')
+                        hh_gdf['ID'] = range(1, 9)
+                        hh_gdf.to_file('Data/{0}_{1}.shp'.format('hotspots_dissolved', data))
+                        test = 1
+                    except:
+                        try:
+                            cluster = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 2,
+                                       2, 2, 2, 2, 3, 3, 4, 5, 6, 6, 7, 7, 8, 8, 8, 8]
+                            hh_gdf['CLUSTER'] = cluster
+                            hh_gdf = hh_gdf.dissolve(by='CLUSTER')
+                            hh_gdf['ID'] = range(1, 9)
+                            hh_gdf.to_file('Data/{0}_{1}.shp'.format('hotspots_dissolved', data))
+                            test = 1
+                        except:
+                            pass
+
+        else:
+            print('Wrong data')
+
+    # Plot count per cell
+    ax = municipalities_lv.plot(facecolor='none', edgecolor='grey', figsize=(9, 9))
+    entlebuch_lv.plot(facecolor='none', edgecolor='black', ax = ax)
+    municipalities_lv.apply(lambda x: ax.annotate(text=x.NAME, xy=x.geometry.centroid.coords[0], ha='center', fontsize = 8, color = 'black', path_effects=[pe.withStroke(linewidth=1.2, foreground="white")]), axis=1)
+    raster_polygon_plot.plot(ax = ax, column='value', cmap = 'hot_r', edgecolor = 'black', legend = True, alpha = 0.6)
+    base_plot(ax = ax, output_name=data + '_total_number_' + str(grid_size) + '_' + count)
+    plt.show()
+
+    # Plot HH clusters
+    ax = municipalities_lv.plot(facecolor='none', edgecolor='grey', figsize=(9, 9))
+    entlebuch_lv.plot(facecolor='none', edgecolor='black', ax = ax)
+    municipalities_lv.apply(lambda x: ax.annotate(text=x.NAME, xy=x.geometry.centroid.coords[0], ha='center', fontsize = 8, color = 'black', path_effects=[pe.withStroke(linewidth=1.2, foreground="white")]), axis=1)
+    hh_gdf.plot(ax=ax, facecolor='red', edgecolor='black', alpha = 0.5)
+    hotspot = ['Hotspot']
+    #custom_legend = [mpatches.Patch(facecolor='red', edgecolor='black', alpha = 0.5, linewidth=1, linestyle='-')]
+    #ax.legend(custom_legend, hotspot, loc='lower right', facecolor = 'white', fontsize=12)
+    if count == 'Contributors':
+        try:
+            hh_gdf.apply(lambda x: ax.annotate(text=x.ID, xy=x.geometry.centroid.coords[0], ha='center', fontsize = 15, color = 'black', path_effects=[pe.withStroke(linewidth=1.2, foreground="white")]), axis=1)
+        except:
+            pass
+    base_plot(ax=ax, output_name=data + '_extracted_hotspots_queen_' + str(grid_size) + '_' + count)
+    plt.show()
 
     # KDE Plot
     x_mesh, y_mesh, intensity = kde(point_file_lv, boundary, 100, 1000)
@@ -509,9 +493,95 @@ def kde_gpx_files(municipalities_lv, entlebuch_lv):
     base_plot(ax=ax, output_name='kde_gpx_files')
     plt.show()
 
+# This function calculates the annotation frequency for three activities
+def boxplot_annotation_freq():
+    w = {"W_Bramboden-Napf": 7,
+         "W_Brienzer Rothorn - Eisee - Schoenebode": 6.1,
+         "W_Emmenuferweg Schuepfheim-Wolhusen": 16.6,
+         "W_Emmenuferweg Soerenberg-Schuepfheim": 22.1,
+         "W_Entlebuch - Rengg - Ebnet": 12.1,
+         "W_Escholzmatt - Turner": 10.4,
+         "W_Fluehli - Wasserfall Chessiloch": 3.8,
+         "W_Fuerstein - Wanderung zwischen Waldemme und Sarnersee": 8.8,
+         "W_Fuerstein Langis": 12,
+         "W_Gastronomische Rundwanderung Soerenberg": 8.9,
+         "W_Glaubenbielen - Sattelpass - Seewen - Staeldili - Fluehli": 20.2,
+         "W_Glaubenbielen - Soerenberg": 9.4,
+         "W_Hirsegg - Schrattenfluh - Rossweid - Soerenberg": 18,
+         "W_Hoehenroute Langis-Pilatus": 22.2,
+         "W_Hoehenweg Entlebuch Emmental - Etappe 1 Doppleschwand - Obstaldenegg": 10,
+         "W_Holzwegen - Napf": 5.1,
+         "W_Im Wanderschuh zum Aelplerrendez-vous - Etappe 1": 10.8,
+         "W_Im Wanderschuh zum Aelplerrendez-vous - Etappe 2": 8.3,
+         "W_Marbachegg - Bumbach - Marbach": 14.3,
+         "W_Marbachegg - Huernli - Marbach": 14.5,
+         "W_Marbachegg - Kemmeriboden": 8.1,
+         "W_Marbacher Genusstour": 3.4,
+         "W_Menzberg - Napf - Huebeli b Hergiswil": 17.1,
+         "W_Moorlandschaftspfad Habkern - Soerenberg": 16.8,
+         "W_Moorlandschaftspfad Hilferenpass": 16.3,
+         "W_Moorlandschaftspfad Klein Entlen": 21.3,
+         "W_Moorlandschaftspfad Moorlandschaft Glaubenberg 1": 13.9,
+         "W_Moorlandschaftspfad Moorlandschaft Glaubenberg 2": 11.3,
+         "W_Moor-Rundweg Rossweid-Salwiden": 10,
+         "W_Rossweid - Blattenegg": 5.3,
+         "W_Rossweid - Kemmeribodenbad": 9.2,
+         "W_Rundwanderung Gfellen-Schimbrig": 14.2,
+         "W_Rundwanderung Heiligkreuz-First": 7.6,
+         "W_Rundwanderung Schuepfheim- Farnere": 12.7,
+         "W_Rundweg Marbachegg": 1.8,
+         "W_Rundweg zur Kneippanlage in Fluehli": 4.3,
+         "W_Salwideli - Arniberg - Tannigsbode - Salwideli": 16.1,
+         "W_Soerenberg - Satz - Haglere - Mittlist Gfael - Soerenberg": 9.3,
+         "W_Steinbock-Trek Brienzer Rothorn 1 Etappe": 7.5,
+         "W_Steinbock-Trek Brienzer Rothorn 2 Etappe": 14.5,
+         "W_Ueber den Schlierengrat": 10.4,
+         "W_Wanderplausch und Biergenuss in Marbach": 3,
+         "W_Wiggen – Marbach": 6,
+         "W_Wiggen - Wachthubel - Marbach": 14.9,
+         "W_Wiss Emme Weg - Escholzmatt-Schuepfheim": 9.1}
+    tw = {"TW_Abenteuerpfad Marbach - Sagenhaftes Gezwitscher": 3.8,
+          "TW_Emeritenweg": 3.7,
+          "TW_Erlebnis Energie Entlebuch": 13,
+          "TW_Geo-Pfad Escholzmatt": 11.5,
+          "TW_Glasereipfad": 14.3,
+          "TW_Koehlerweg Romoos": 11,
+          "TW_Kulturweg Schuepfheim": 3.7,
+          "TW_Maerchenweg Wurzilla - Lerne das Tannenwurzelkind kennen": 1.4,
+          "TW_Moorpfad Mettilimoos": 14.1,
+          "TW_Schutzwaldpfad Heiligkreuz": 1.9,
+          "TW_Seelensteg Heiligkreuz - Ein Ort der Kraft": 1.2,
+          "TW_Sonnentauweg Soerenberg": 1.4,
+          "TW_Zyberliland Romoos - der abenteuerliche Baergmandli": 5.6}
+    mb = {"MB_Aentlibuecher-Tour": 34,
+          "MB_Choehler-Tour": 16.3,
+          "MB_Clientis Flowtrail Marbachegg": 3.9,
+          "MB_Farneren-Tour": 28,
+          "MB_Kleiner Susten-Tour": 11.2,
+          "MB_Marbacher Panoramarunde": 22.1,
+          "MB_Napfbergland-Tour": 37,
+          "MB_Rund um die Schrattenfluh": 52.1,
+          "MB_Sattelpass Seewenegg": 39.1,
+          "MB_Schimbrig-First-Tour": 31.4,
+          "MB_Schuepfheimer Panoramatour": 26.7}
+
+    densities = []
+    densities.append(annotations_per_km(w, text_ann_lv))
+    densities.append(annotations_per_km(tw, text_ann_lv))
+    densities.append(annotations_per_km(mb, text_ann_lv))
+
+    plt.figure(figsize=(6, 4))
+    plt.boxplot(densities)
+    # plt.xlabel('Activity')
+    plt.ylabel('Frequency [Annotations/km]')
+    plt.xticks([1, 2, 3], ['Hiking', 'Themed Trail', 'Mountain Biking'])
+    plt.tight_layout()
+    plt.show()
+
+# This function runs all important functions in this thesis
 def main():
     # This is to create the Flickr dataset
-    create_flickr_data() # run this multiple times
+    # create_flickr_data() # run this multiple times
     # flickr_data_analysis()
 
     # #This part loads the annotations, edits them and returns plots of their counts
@@ -524,6 +594,7 @@ def main():
     # extract_numbers_pictures(feature='Landscape Features', add_title='total', df = "Data/Annotations/picture_annotations_merged.csv")
     # extract_numbers_pictures(feature='Cultural Ecosystem Services', add_title='total', df = "Data/Annotations/picture_annotations_merged.csv")
 
+    # #Calculate Jaccard-Indexes for Annotations of fellow geography student
     #jaccard_index()
 
     # Manual CES Detection
@@ -533,7 +604,6 @@ def main():
 
 
     # #This part runs the hotspot analysis aka Automatic CES Detection
-
     # create_hotspots(point_file_lv = flickr_ann_lv, boundary = entlebuch_lv, grid_size = 1000, count = 'Contributors', data = 'Flickr Pictures')
     # create_hotspots(point_file_lv = flickr_ann_lv, boundary = entlebuch_lv, grid_size = 1000, count = 'Pictures', data = 'Flickr Pictures')
     # create_hotspots(point_file_lv = text_ann_lv_clear, boundary = entlebuch_lv, grid_size = 1000, count = 'Contributors', data = 'Text Data')
@@ -559,12 +629,15 @@ def main():
     #extract_manual_annotations(flickr_annotations_lv, text_ann_lv_clear, 'Text', 20)
     #extract_manual_annotations(flickr_annotations_lv, text_ann_lv_clear, 'Combined', 20)
 
+    # #Random plots and analyses
     #LF_CES_Distances = min_distance(text_ann_lv[text_ann_lv['LF/CES'] == 'LF'], text_ann_lv[text_ann_lv['LF/CES'] == 'CES'])
     #min_distance_plot(LF_CES_Distances, 'LF CES Cum Distance', mode = 'cummulative')
     #hist_automatic()
     #kde_ces_plots(flickr_annotations_lv, text_ann_lv_clear, entlebuch_lv):
     #kde_gpx_files(municipalities_lv, entlebuch_lv)
     #count_per_contributor(flickr_40_lv)
+    boxplot_annotation_freq()
+
 
     pass
 main()

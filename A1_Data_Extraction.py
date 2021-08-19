@@ -1,22 +1,7 @@
 import flickrapi
-import geopandas
-import pandas as pd
-from os import path
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
-import datetime
-import urllib
-import contextily as ctx
-import libpysal as ps
-import esda
-import matplotlib.patheffects as pe
-from shapely.geometry import Polygon
-#from splot.esda import moran_scatterplot
-#from splot.esda import lisa_cluster
 from A3_Data_Handling import *
 
-########## 1st Part ##########
+
 # This part retrieves the pictures from the Flickr API and adds Pictures to the dataset and stores it as .csv and .shp
 
 # This function is used to access the Flickr API and store all the data in a df

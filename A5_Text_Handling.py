@@ -1,7 +1,8 @@
-#from A6_Geometric_Functions import clipping
-from A3_Data_Handling import df_gdf_conversion
-from A3_Data_Handling import save
+from A3_Data_Handling import *
 from A2_Visualisation import *
+import geopandas
+import pandas as pd
+
 # This function loads the text annotations and edits some attributes and stores it as a new csv file
 def edit_tour_annotations():
     activities = ['BT', 'EB', 'MB', 'TR', 'TW', 'VT', 'W', 'w_emmen']

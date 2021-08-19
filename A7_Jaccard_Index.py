@@ -1,10 +1,9 @@
-from sklearn.metrics import cohen_kappa_score
 import pandas as pd
 import matplotlib.pyplot as plt
 import statistics
 import numpy as np
-### Picture Data
 
+### Picture Data
 def pictures_jaccard(mode):
     annotation_folder = 'Data/Annotations/'
     #test_folder = 'Data/Base Data/Test - Pictures/20210505_Pictures_Test.csv'
@@ -48,98 +47,6 @@ def pictures_jaccard(mode):
     else:
         print('Unexpected mode')
     return df
-
-def pictures_kappa(mode):
-    annotation_folder = 'Data/Annotations/'
-    test_folder = 'Data/Base Data/Test - Pictures/20210505_Pictures_Test.csv'
-    fabian_annotation_file = annotation_folder + 'picture_annotations_merged.csv'
-    fabienne_annotation_file = annotation_folder + 'picture_annotations_fabienne.csv'
-    fabian_data = pd.read_csv(fabian_annotation_file, delimiter=',')
-    fabian_data['SUBTYPE'] = fabian_data['SUBTYPE'].str.lower()
-    fabienne_data = pd.read_csv(fabienne_annotation_file, delimiter=';')
-    picture_ids = fabienne_data['PICTURE_ID'].drop_duplicates()
-
-    #picture_ids = [50429908798]#, 50359582678, 50360443562]
-
-    ces_list = ["Identity", "Information Board", "Information Office", "Local History", "Tradition", "Traditional Architecture",
-                "Recreational Facilities", "Signpost", "Viewpoint", "Camping", "People", "Restaurant / Accommodation",
-                "Dawn / Sunset", "Healing Powers", "Place Attachment", "Church", "Summit Cross"]
-    #ces_list = [x.lower() for x in ces_list]
-
-    df = pd.DataFrame(columns=['PICTURE_ID', 'SUBTYPE', 'FORE-/BACKGROUND', 'TRUE', 'PRED'])
-
-    ## With Fore- and Background
-    if mode == 'with':
-        for pic_id in picture_ids:
-            fabian_subset = fabian_data[(fabian_data['PICTURE_ID'] == pic_id)].drop_duplicates(subset=['SUBTYPE', 'FORE-/BACKGROUND'])
-            fabienne_subset = fabienne_data[(fabienne_data['PICTURE_ID'] == pic_id)].drop_duplicates(subset=['SUBTYPE', 'FORE-/BACKGROUND'])
-
-            # add annotations made by me:
-            for idx, fab_ann in fabian_subset.iterrows():
-                fab_subtype = fab_ann['SUBTYPE']
-                fab_ground = fab_ann['FORE-/BACKGROUND']
-
-                # check if subtype is ces -> if true fore-/background is irrelevant
-                if fab_subtype in ces_list:
-                    fan_list = fabienne_subset[(fabienne_subset['SUBTYPE'] == fab_subtype)]
-                else:
-                    fan_list = fabienne_subset[(fabienne_subset['SUBTYPE'] == fab_subtype) & (fabienne_subset['FORE-/BACKGROUND'] == fab_ground)]
-
-                # if annotation was made by me and fabienne
-                if len(fan_list) > 0:
-                    df = df.append(
-                        {'PICTURE_ID': pic_id, 'SUBTYPE': fab_subtype, 'FORE-/BACKGROUND': fab_ground, 'TRUE': 'yes', 'PRED': 'yes'},
-                        ignore_index=True)
-
-                # if annotation was made only by me
-                else:
-                    df = df.append(
-                        {'PICTURE_ID': pic_id, 'SUBTYPE': fab_subtype, 'FORE-/BACKGROUND': fab_ground, 'TRUE': 'yes', 'PRED': 'no'},
-                        ignore_index=True)
-
-            # add annotations made by fabienne, but not by fabian
-            for idx, fan_ann in fabienne_subset.iterrows():
-                fan_subtype = fan_ann['SUBTYPE']
-                fan_ground = fan_ann['FORE-/BACKGROUND']
-
-                # check if subtype is ces -> if true fore-/background is irrelevant
-                if fan_subtype in ces_list:
-                    df_list = df[(df['SUBTYPE'] == fan_subtype) & (df['PICTURE_ID'] == pic_id)]
-                else:
-                    df_list = df[(df['SUBTYPE'] == fan_subtype) & (df['FORE-/BACKGROUND'] == fan_ground) & (df['PICTURE_ID'] == pic_id)]
-
-                # if annotation has not been added yet, add it
-                if len(df_list) < 1:
-                    df = df.append(
-                        {'PICTURE_ID': pic_id, 'SUBTYPE': fan_subtype, 'FORE-/BACKGROUND': fan_ground, 'TRUE': 'no', 'PRED': 'yes'},
-                        ignore_index=True)
-
-    ## Without Fore- and Background
-    elif mode == 'without':
-        for pic_id in picture_ids:
-            fabian_subset = fabian_data[(fabian_data['PICTURE_ID'] == pic_id)].drop_duplicates(subset = 'SUBTYPE')
-            fabienne_subset = fabienne_data[(fabienne_data['PICTURE_ID'] == pic_id)].drop_duplicates(subset = 'SUBTYPE')
-            fab_list = list(fabian_subset.SUBTYPE)
-            fan_list = list(fabienne_subset.SUBTYPE)
-            pic_id_subtype = list(df[(df['PICTURE_ID'] == pic_id)].SUBTYPE)
-            # check whether my annotations are in fabiennes (if yes - one one, if not - one two)
-            for subtype in fab_list:
-                if subtype in fan_list and subtype not in pic_id_subtype:
-                    df = df.append({'PICTURE_ID': pic_id, 'SUBTYPE': subtype, 'TRUE': 'yes', 'PRED': 'yes'},
-                                   ignore_index=True)
-                elif subtype not in fan_list and subtype not in pic_id_subtype:
-                    df = df.append({'PICTURE_ID': pic_id, 'SUBTYPE': subtype, 'TRUE': 'yes', 'PRED': 'no'},
-                                   ignore_index = True)
-                else:
-                    pass
-            pic_id_subtype = list(df[(df['PICTURE_ID'] == pic_id)].SUBTYPE)
-            for subtype in fan_list:
-                if subtype not in pic_id_subtype:
-                    df = df.append({'PICTURE_ID': pic_id, 'SUBTYPE': subtype, 'TRUE': 'no', 'PRED': 'yes'}, ignore_index=True)
-        else:
-            print("Unclear mode")
-    return(df)
-
 
 def jaccard_hist_pictures(df, output_name):
     df = df[['J-INDEX_with', 'J-INDEX_without']]
