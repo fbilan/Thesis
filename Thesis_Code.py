@@ -636,8 +636,7 @@ def main():
     #kde_ces_plots(flickr_annotations_lv, text_ann_lv_clear, entlebuch_lv):
     #kde_gpx_files(municipalities_lv, entlebuch_lv)
     #count_per_contributor(flickr_40_lv)
-    boxplot_annotation_freq()
-
-
+    #boxplot_annotation_freq()
     pass
+
 main()
